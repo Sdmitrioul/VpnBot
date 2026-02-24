@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="WireGuardVpnBot" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+    <module name="WireguardVpnBot.main" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="com.dskroba.vpn.WireGuardVpnBot" />
+    <option name="VM_PARAMETERS" value="-Dinstance.conf=./devops/property/telegram.dev.properties;./devops/property/application.dev.properties -Dlog4j.configurationFile=./devops/logs/log4j2.xml" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

@@ -1,0 +1,25 @@
+telegram:
+  bot:
+    token: ${TELEGRAM_BOT_TOKEN}
+    admin-users: ${TELEGRAM_ADMIN_USERS}
+    threads-count: ${TELEGRAM_THREADS_COUNT:2}
+
+application:
+  vpn:
+    file: ${VPN_CONFIGURATION_FILE}
+    min-client-ip: ${VPN_MIN_CLIENT_IP:10.7.0.1}
+    vpn-interface: ${VPN_INTERFACE:wg0}
+    vpn-port: ${VPN_PORT:80}
+    public-key: ${VPN_PUBLIC_KEY}
+    public-ip: ${SERVER_PUBLIC_IP}
+    dns-servers: ${DNS_SERVERS:8.8.8.8, 8.8.4.4}
+  database:
+    principals: ${DATABASE_NAME_PRINCIPAL}
+    principal-states: ${DATABASE_NAME_PRINCIPAL_STATE}
+    principal-handlers: ${DATABASE_NAME_PRINCIPAL_HANDLERS}
+    path: ${DATABASE_PATH}
+
+logging:
+  level:
+    com.dskroba: INFO
+    root: INFO
