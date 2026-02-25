@@ -31,6 +31,7 @@ public class VpnService {
     public VpnService(String mainConfigurationFile, VpnServerConfiguration serverConfiguration) {
         this.mainConfigurationFile = Paths.get(mainConfigurationFile);
         this.serverConfiguration = serverConfiguration;
+        log.info("Vpn configuration is {}", serverConfiguration);
     }
 
     public void deleteUserConfig(String userConfiguration) {
@@ -62,10 +63,8 @@ public class VpnService {
     }
 
     private void reloadClients() {
-        if (System.getenv("PROD") != null) {
-            exec("wg-quick strip %s | wg syncconf %s /dev/stdin"
-                    .formatted(serverConfiguration.vpnInterface(), serverConfiguration.vpnInterface()));
-        }
+        exec("wg-quick down %s && wg-quick up %s"
+                .formatted(serverConfiguration.vpnInterface(), serverConfiguration.vpnInterface()));
     }
 
     private void removeUserFromVpnConfigurationFile(String userConfiguration) {

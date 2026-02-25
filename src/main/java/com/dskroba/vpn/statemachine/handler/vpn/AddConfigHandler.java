@@ -62,7 +62,7 @@ public class AddConfigHandler extends AbstractVpnManagerHandler {
 
     private static Optional<Effect> checkLetters(String configurationName) {
         for (char character : configurationName.toCharArray()) {
-            if (!(Character.isLetter(character) || Character.isDigit(character) || character == '_')) {
+            if (!(Character.isLetter(character) || Character.isDigit(character) || character == '_' || character == '-')) {
                 return Optional.of(MessageEffect.of("""
                         Name could contain only letters and digits or _ sign.
                         Try another one"""));
