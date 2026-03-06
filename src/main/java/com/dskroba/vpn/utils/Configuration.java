@@ -43,7 +43,7 @@ public final class Configuration {
 
     private static void addPropertiesToSystem(Properties properties) {
         for (String key : properties.stringPropertyNames()) {
-            String value = properties.getProperty(key);
+            String value = properties.getProperty(key).strip();
             System.setProperty(key, value);
             log.debug("Set system property: {}={}", key, value);
         }

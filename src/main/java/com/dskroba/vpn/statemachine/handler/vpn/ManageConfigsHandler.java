@@ -13,6 +13,7 @@ import com.dskroba.vpn.statemachine.state.ContextAccessor;
 import com.dskroba.vpn.statemachine.state.State;
 import com.dskroba.vpn.statemachine.state.descriptors.StateDescriptor;
 import com.dskroba.vpn.type.SelectOption;
+import com.dskroba.vpn.utils.VpnUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -22,6 +23,7 @@ import java.util.Optional;
 import static com.dskroba.vpn.statemachine.state.descriptors.VpnDescriptors.CONFIGURATION_NAME_ATTRIBUTE;
 import static com.dskroba.vpn.statemachine.state.descriptors.VpnDescriptors.MANAGE_VPN_CONFIGURATION;
 import static com.dskroba.vpn.type.ContentType.CONF;
+import static com.dskroba.vpn.type.ContentType.PNG;
 
 @Component
 public class ManageConfigsHandler extends AbstractVpnManagerHandler {
@@ -57,9 +59,14 @@ public class ManageConfigsHandler extends AbstractVpnManagerHandler {
         String filename = getVpnConfigurationName();
         return Optional.of(loadVpnConfiguration(filename)
                 .map(data -> FileEffect.of("Configuration file",
-                        filename + CONF.filenameExtension(),
-                        CONF,
-                        data).composite(switchToMenu()))
+                                filename + CONF.filenameExtension(),
+                                CONF,
+                                data)
+                        .composite(FileEffect.of("",
+                                filename + PNG.filenameExtension(),
+                                PNG,
+                                VpnUtils.generateQrPng(new String(data))))
+                        .composite(switchToMenu()))
                 .orElse(MessageEffect.of("Unable to locate configuration, it may be removed by admin before.").composite(switchToMenu())));
     }
 

@@ -26,6 +26,8 @@ dependencies {
 
     implementation("com.google.code.gson:gson")
     implementation("com.google.guava:guava:33.4.0-jre")
+    //Generate QR codes
+    implementation("com.google.zxing:javase:3.5.4")
 
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")

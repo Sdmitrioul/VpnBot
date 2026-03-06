@@ -1,6 +1,7 @@
 package com.dskroba.vpn.statemachine.handler.vpn;
 
 import com.dskroba.vpn.principal.PrincipalService;
+import com.dskroba.vpn.principal.Role;
 import com.dskroba.vpn.service.VpnService;
 import com.dskroba.vpn.statemachine.effect.Effect;
 import com.dskroba.vpn.statemachine.effect.FileEffect;
@@ -20,6 +21,7 @@ import java.util.Optional;
 
 import static com.dskroba.vpn.statemachine.state.descriptors.VpnDescriptors.ADD_VPN_CONFIGURATION;
 import static com.dskroba.vpn.type.ContentType.CONF;
+import static com.dskroba.vpn.type.ContentType.PNG;
 import static com.dskroba.vpn.utils.VpnPrincipalConfigurationEncoder.configurationName;
 
 @Component
@@ -40,12 +42,13 @@ public class AddConfigHandler extends AbstractVpnManagerHandler {
     }
 
     private Effect generateConfiguration(String configurationName) {
-        byte[] configuration = vpnService.createUserConfiguration(configurationName(ContextAccessor.principal().key(), configurationName));
+        VpnService.UserConfiguration configuration = vpnService.createUserConfiguration(configurationName(ContextAccessor.principal().key(), configurationName));
         ContextAccessor.context().setPrincipal(
                 ContextAccessor.principal().toBuilder()
-                        .addVpnConfiguration(new UserVpnConfiguration(configurationName, configuration))
+                        .addVpnConfiguration(new UserVpnConfiguration(configurationName, configuration.file()))
                         .build());
-        return FileEffect.of("Paste this configuration in WireGuard app.\nTreat this configuration as password.", configurationName + CONF.filenameExtension(), CONF, configuration)
+        return FileEffect.of("Paste this configuration in WireGuard app.\nTreat this configuration as password.", configurationName + CONF.filenameExtension(), CONF, configuration.file())
+                .composite(FileEffect.of("", configurationName + PNG.filenameExtension(), PNG, configuration.image()))
                 .composite(switchToMenu());
     }
 
@@ -56,7 +59,12 @@ public class AddConfigHandler extends AbstractVpnManagerHandler {
     }
 
     private Optional<Effect> checkLimits() {
-        //TODO
+        if (ContextAccessor.getPrincipalRole().allowed(Role.ADMIN)) {
+            return Optional.empty();
+        }
+        if (ContextAccessor.principal().context().vpnConfigurations().size() >= 3) {
+            return Optional.of(MessageEffect.of("Limit per user is 3 devices").composite(switchToMenu()));
+        }
         return Optional.empty();
     }
 

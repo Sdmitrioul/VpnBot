@@ -44,7 +44,7 @@ public class VpnService {
         }
     }
 
-    public byte[] createUserConfiguration(String configurationName) {
+    public UserConfiguration createUserConfiguration(String configurationName) {
         updateLock.lock();
         try {
             VpnKeys keys = generateKeys();
@@ -53,10 +53,11 @@ public class VpnService {
             String clientIp = getNextPeerIp(mainConfiguration, serverConfiguration.minClientIp())
                     .orElseThrow(() -> new CustomException("There is too much users!"));
             String clientConfigFile = VpnUtils.generateUserConfig(keys, clientIp, serverConfiguration);
+            byte[] png = VpnUtils.generateQrPng(clientConfigFile);
             String newPeerBlock = VpnUtils.generatePeerBlock(keys, configurationName, clientIp);
             updateMainConfigurationFile(mainConfiguration + newPeerBlock);
             reloadClients();
-            return clientConfigFile.getBytes(StandardCharsets.UTF_8);
+            return new UserConfiguration(clientConfigFile.getBytes(StandardCharsets.UTF_8), png);
         } finally {
             updateLock.unlock();
         }
@@ -99,5 +100,8 @@ public class VpnService {
             log.error("IO exception reading: {}", file, e);
         }
         return Optional.empty();
+    }
+
+    public record UserConfiguration(byte[] file, byte[] image) {
     }
 }
