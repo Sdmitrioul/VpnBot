@@ -7,7 +7,11 @@ import com.dskroba.vpn.actor.PrincipalActor;
 import com.dskroba.vpn.exception.AuthorizationException;
 import com.dskroba.vpn.principal.Principal;
 import com.dskroba.vpn.statemachine.effect.Effect;
+import com.dskroba.vpn.statemachine.effect.MessageEffect;
 import com.dskroba.vpn.statemachine.event.Event;
+import com.dskroba.vpn.statemachine.state.ContextAccessor;
+import com.dskroba.vpn.statemachine.state.State;
+import com.dskroba.vpn.statemachine.state.descriptors.CommandStatesDescriptors;
 import com.dskroba.vpn.telegram.TelegramId;
 
 public abstract class StateMachine<I> {
@@ -38,8 +42,18 @@ public abstract class StateMachine<I> {
                 Effect effects = eventHandler.handleEvent(parsedEvent);
                 ioModule.handleEffect(effects);
             } catch (Exception e) {
+                ioModule.handleEffect(MessageEffect.of("Server error!\nReturning to menu").composite(switchToMenu()));
                 throw new JobException(e);
             }
         });
+    }
+
+    private Effect switchToMenu() {
+        State menuState = handlerRegistry.getFactory(CommandStatesDescriptors.MENU).createState();
+        ContextAccessor.context().updateStateContext(stateContext -> {
+            stateContext.clearAttributes();
+            stateContext.setState(menuState);
+        });
+        return menuState.initialEffect();
     }
 }

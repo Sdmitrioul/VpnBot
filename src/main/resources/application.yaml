@@ -6,13 +6,23 @@ telegram:
 
 application:
   vpn:
-    file: ${VPN_CONFIGURATION_FILE}
-    min-client-ip: ${VPN_MIN_CLIENT_IP:10.7.0.1}
-    vpn-interface: ${VPN_INTERFACE:wg0}
-    vpn-port: ${VPN_PORT:80}
     public-key: ${VPN_PUBLIC_KEY}
     public-ip: ${SERVER_PUBLIC_IP}
     dns-servers: ${DNS_SERVERS:8.8.8.8, 8.8.4.4}
+    interfaces:
+      first:
+        file: ${VPN_CONFIGURATION_FILE_FIRST}
+        min-client-ip: ${VPN_MIN_CLIENT_IP_FIRST:10.7.0.1}
+        vpn-interface: ${VPN_INTERFACE_FIRST:wg0}
+        vpn-port: ${VPN_PORT_FIRST:80}
+        display-name: ${VPN_DISPLAY_NAME_FIRST:EUROPE}
+      second:
+        file: ${VPN_CONFIGURATION_FILE_SECOND}
+        min-client-ip: ${VPN_MIN_CLIENT_IP_SECOND:10.3.0.2}
+        vpn-interface: ${VPN_INTERFACE_SECOND:wg2}
+        vpn-port: ${VPN_PORT_SECOND:8080}
+        display-name: ${VPN_DISPLAY_NAME_SECOND:RUSSIA}
+      # Add 'second' with same structure when using two interfaces
   database:
     principals: ${DATABASE_NAME_PRINCIPAL}
     principal-states: ${DATABASE_NAME_PRINCIPAL_STATE}

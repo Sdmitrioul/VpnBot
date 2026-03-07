@@ -80,7 +80,7 @@ public class ManageUserHandler extends AbstractHandlerWithFactory {
             return Optional.of(MessageEffect.of("User with handler %s blocked".formatted(storedHandler.telegramHandle())).composite(switchToMenu()));
         }
         principal.context().vpnConfigurations().forEach(
-                config -> vpnService.deleteUserConfig(VpnPrincipalConfigurationEncoder.configurationName(principal.key(), config.name()))
+                config -> vpnService.deleteUserConfig(VpnPrincipalConfigurationEncoder.configurationName(principal.key(), config.name()), config.vpnInterface())
         );
         jobService.submitJob(principal.key(), new RemoveUserJob(contextRemover));
         return Optional.of(MessageEffect.of("User was blocked and all his devices disconnected!").composite(switchToMenu()));

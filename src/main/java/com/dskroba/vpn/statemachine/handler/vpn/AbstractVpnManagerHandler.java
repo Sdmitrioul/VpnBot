@@ -10,6 +10,7 @@ import com.dskroba.vpn.telegram.TelegramId;
 import com.dskroba.vpn.type.UserVpnConfiguration;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import static com.dskroba.vpn.statemachine.state.descriptors.UsersDescriptors.USER_ID_STATE_ATTRIBUTE;
@@ -35,14 +36,14 @@ public abstract class AbstractVpnManagerHandler extends AbstractHandlerWithFacto
         return ContextAccessor.context().getAttribute(USER_ID_STATE_ATTRIBUTE, TelegramId.class);
     }
 
-    protected Optional<byte[]> loadVpnConfiguration(String configurationName) {
+    protected Optional<byte[]> loadVpnConfiguration(String configurationName, String vpnInterface) {
         return Optional.ofNullable(getPrincipalTelegramId())
                 .map(principalService::loadPrincipal)
                 .or(() -> Optional.ofNullable(ContextAccessor.principal()))
                 .map(Principal::context)
                 .map(PrincipalData::vpnConfigurations)
                 .flatMap(configurations -> configurations.stream()
-                        .filter(conf -> conf.name().equals(configurationName))
+                        .filter(conf -> conf.name().equals(configurationName) && Objects.equals(conf.vpnInterface(), vpnInterface))
                         .findAny())
                 .map(UserVpnConfiguration::content);
     }

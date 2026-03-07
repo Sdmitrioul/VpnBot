@@ -46,8 +46,11 @@ public class ManageConfigsHandler extends AbstractVpnManagerHandler {
         if (!"Delete device configuration".equalsIgnoreCase(message)) {
             return Optional.empty();
         }
+        String configKey = getConfigKey();
+        String configName = SelectConfigsHandler.parseConfigName(configKey);
+        String interfaceId = SelectConfigsHandler.parseConfigInterface(configKey);
         jobService.submitJob(Optional.ofNullable(getPrincipalTelegramId())
-                .orElse(ContextAccessor.principal().key()), new DeleteVpnConfigurationJob(getVpnConfigurationName(), vpnService));
+                .orElse(ContextAccessor.principal().key()), new DeleteVpnConfigurationJob(configName, interfaceId, vpnService));
         return Optional.of(MessageEffect.of("Configuration removed successfully!")
                 .composite(switchToMenu()));
     }
@@ -56,21 +59,23 @@ public class ManageConfigsHandler extends AbstractVpnManagerHandler {
         if (!"View device configuration".equalsIgnoreCase(message)) {
             return Optional.empty();
         }
-        String filename = getVpnConfigurationName();
-        return Optional.of(loadVpnConfiguration(filename)
+        String configKey = getConfigKey();
+        String configName = SelectConfigsHandler.parseConfigName(configKey);
+        String interfaceId = SelectConfigsHandler.parseConfigInterface(configKey);
+        return Optional.of(loadVpnConfiguration(configName, interfaceId)
                 .map(data -> FileEffect.of("Configuration file",
-                                filename + CONF.filenameExtension(),
+                                configName + CONF.filenameExtension(),
                                 CONF,
                                 data)
                         .composite(FileEffect.of("",
-                                filename + PNG.filenameExtension(),
+                                configName + PNG.filenameExtension(),
                                 PNG,
                                 VpnUtils.generateQrPng(new String(data))))
                         .composite(switchToMenu()))
                 .orElse(MessageEffect.of("Unable to locate configuration, it may be removed by admin before.").composite(switchToMenu())));
     }
 
-    private String getVpnConfigurationName() {
+    private String getConfigKey() {
         return ContextAccessor.context().getAttribute(CONFIGURATION_NAME_ATTRIBUTE, String.class);
     }
 

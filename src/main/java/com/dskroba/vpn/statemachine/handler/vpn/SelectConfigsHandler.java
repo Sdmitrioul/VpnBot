@@ -20,6 +20,7 @@ import static com.dskroba.vpn.statemachine.state.descriptors.VpnDescriptors.*;
 @Component
 public class SelectConfigsHandler extends AbstractVpnManagerHandler {
     private static final String GO_TO_MENU_OPTION = "Go to menu";
+    static final String CONFIG_KEY_SEPARATOR = "|";
 
     @Autowired
     public SelectConfigsHandler(VpnService vpnService, PrincipalService principalService) {
@@ -30,7 +31,8 @@ public class SelectConfigsHandler extends AbstractVpnManagerHandler {
     protected Optional<Effect> handleStateEvents(Event event) {
         return handleMessageEvent(event)
                 .filter(this::checkOption)
-                .map(this::storeConfigurationName)
+                .flatMap(this::configKeyFromLabel)
+                .map(this::storeConfigurationKey)
                 .or(() -> handleMessageEvent(event)
                         .map(this::gotToMenu));
     }
@@ -42,27 +44,63 @@ public class SelectConfigsHandler extends AbstractVpnManagerHandler {
         return null;
     }
 
-    private Effect storeConfigurationName(String configurationName) {
+    private Effect storeConfigurationKey(String configKey) {
         return moveToState(MANAGE_VPN_CONFIGURATION,
-                context -> context.setAttribute(CONFIGURATION_NAME_ATTRIBUTE, configurationName));
+                context -> context.setAttribute(CONFIGURATION_NAME_ATTRIBUTE, configKey));
     }
 
-    private boolean checkOption(String configurationName) {
-        return userVpnConfigurations().stream().map(UserVpnConfiguration::name).anyMatch(configurationName::equals);
+    private boolean checkOption(String message) {
+        if (GO_TO_MENU_OPTION.equals(message)) {
+            return false;
+        }
+        return configKeyFromLabel(message).isPresent();
+    }
+
+    private Optional<String> configKeyFromLabel(String label) {
+        List<UserVpnConfiguration> configs = userVpnConfigurations();
+        for (UserVpnConfiguration c : configs) {
+            if (configLabel(c).equals(label)) {
+                return Optional.of(configKey(c.name(), c.vpnInterface()));
+            }
+        }
+        return Optional.empty();
+    }
+
+    private String configLabel(UserVpnConfiguration c) {
+        String displayName = vpnService.getInterfaceConfig(c.vpnInterface()).displayName();
+        return c.name() + " (" + displayName + ")";
+    }
+
+    static String configKey(String name, String vpnInterface) {
+        return name + CONFIG_KEY_SEPARATOR + (vpnInterface != null ? vpnInterface : "");
+    }
+
+    public static String parseConfigName(String configKey) {
+        if (configKey == null || !configKey.contains(CONFIG_KEY_SEPARATOR)) {
+            return configKey != null ? configKey : "";
+        }
+        return configKey.substring(0, configKey.indexOf(CONFIG_KEY_SEPARATOR));
+    }
+
+    public static String parseConfigInterface(String configKey) {
+        if (configKey == null || !configKey.contains(CONFIG_KEY_SEPARATOR)) {
+            return null;
+        }
+        String id = configKey.substring(configKey.indexOf(CONFIG_KEY_SEPARATOR) + 1);
+        return id.isEmpty() ? null : id;
     }
 
     @Override
     public State createState() {
         List<UserVpnConfiguration> userVpnConfigurations = userVpnConfigurations();
-        if (userVpnConfigurations().isEmpty()) {
+        if (userVpnConfigurations.isEmpty()) {
             return State.cancelable(SELECT_VPN_CONFIGURATION,
                     SelectEffect.withCancelOption("No available devices, go to menu.", List.of(SelectOption.fullRowOption(GO_TO_MENU_OPTION))));
         }
         return State.cancelable(SELECT_VPN_CONFIGURATION,
                 SelectEffect.withCancelOption("Select device", userVpnConfigurations
                         .stream()
-                        .map(UserVpnConfiguration::name)
-                        .map(SelectOption::fullRowOption)
+                        .map(c -> SelectOption.fullRowOption(configLabel(c)))
                         .toList()));
     }
 

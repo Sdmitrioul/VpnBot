@@ -20,6 +20,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static com.dskroba.vpn.statemachine.state.descriptors.VpnDescriptors.ADD_VPN_CONFIGURATION;
+import static com.dskroba.vpn.statemachine.state.descriptors.VpnDescriptors.PENDING_INTERFACE_ATTRIBUTE;
 import static com.dskroba.vpn.type.ContentType.CONF;
 import static com.dskroba.vpn.type.ContentType.PNG;
 import static com.dskroba.vpn.utils.VpnPrincipalConfigurationEncoder.configurationName;
@@ -42,10 +43,15 @@ public class AddConfigHandler extends AbstractVpnManagerHandler {
     }
 
     private Effect generateConfiguration(String configurationName) {
-        VpnService.UserConfiguration configuration = vpnService.createUserConfiguration(configurationName(ContextAccessor.principal().key(), configurationName));
+        String interfaceId = ContextAccessor.context().getAttribute(PENDING_INTERFACE_ATTRIBUTE, String.class);
+        if (interfaceId == null) {
+            interfaceId = vpnService.getInterfaceConfigs().getFirst().interfaceId();
+        }
+        VpnService.UserConfiguration configuration = vpnService.createUserConfiguration(
+                configurationName(ContextAccessor.principal().key(), configurationName), interfaceId);
         ContextAccessor.context().setPrincipal(
                 ContextAccessor.principal().toBuilder()
-                        .addVpnConfiguration(new UserVpnConfiguration(configurationName, configuration.file()))
+                        .addVpnConfiguration(new UserVpnConfiguration(configurationName, configuration.file(), interfaceId))
                         .build());
         return FileEffect.of("Paste this configuration in WireGuard app.\nTreat this configuration as password.", configurationName + CONF.filenameExtension(), CONF, configuration.file())
                 .composite(FileEffect.of("", configurationName + PNG.filenameExtension(), PNG, configuration.image()))
@@ -53,6 +59,10 @@ public class AddConfigHandler extends AbstractVpnManagerHandler {
     }
 
     private Optional<Effect> checkAgainstConstraints(String configurationName) {
+        String interfaceId = ContextAccessor.context().getAttribute(PENDING_INTERFACE_ATTRIBUTE, String.class);
+        if (interfaceId == null && !vpnService.getInterfaceConfigs().isEmpty()) {
+            interfaceId = vpnService.getInterfaceConfigs().getFirst().interfaceId();
+        }
         return checkLetters(configurationName)
                 .or(() -> checkNameDuplication(configurationName))
                 .or(this::checkLimits);
@@ -84,9 +94,10 @@ public class AddConfigHandler extends AbstractVpnManagerHandler {
         for (UserVpnConfiguration configuration : existingConfiguration) {
             if (Objects.equals(configuration.name(), configurationName)) {
                 return Optional.of(MessageEffect.of("""
-                        Device with name %s already exist.
+                        Device with name %s already exists.
+                        Config name must be unique across all networks.
                         Try another one
-                        """.formatted(configuration)));
+                        """.formatted(configurationName)));
             }
         }
         return Optional.empty();

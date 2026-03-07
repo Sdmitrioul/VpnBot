@@ -1,0 +1,19 @@
+[Unit]
+Description=VPN Bot
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/vpn-bot
+ExecStart=/usr/bin/java \
+    -Dinstance.conf=/opt/vpn-bot/config/vpn-bot.properties \
+    -Dlogging.config=/opt/vpn-bot/logback-spring.xml \
+    -jar /opt/vpn-bot/WireguardVpnBot-1.0-SNAPSHOT.jar
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

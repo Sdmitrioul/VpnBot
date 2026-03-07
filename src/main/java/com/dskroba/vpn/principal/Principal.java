@@ -64,13 +64,13 @@ public record Principal(
             return this;
         }
 
-        public Builder removeVpnConfiguration(String name) {
+        public Builder removeVpnConfiguration(String name, String vpnInterface) {
             if (context == null) {
                 this.context = new PrincipalData(List.of());
             } else {
                 this.context = new PrincipalData(context.vpnConfigurations()
                         .stream()
-                        .filter(conf -> !Objects.equals(conf.name(), name))
+                        .filter(conf -> !(Objects.equals(conf.name(), name) && Objects.equals(conf.vpnInterface(), vpnInterface)))
                         .toList());
             }
             return this;
